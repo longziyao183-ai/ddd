@@ -1,0 +1,778 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>政务数据处理终端</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", sans-serif;
+            background: #d1d8e0;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        /* 手机界面 */
+        .device-screen {
+            width: 100%;
+            max-width: 390px;
+            height: 844px;
+            background: #f5f7fa;
+            border-radius: 45px;
+            overflow: hidden;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.15);
+        }
+
+        /* 状态栏 */
+        .status-bar {
+            height: 54px;
+            background: #f5f7fa;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            padding: 0 28px 12px;
+            font-size: 16px;
+            font-weight: 600;
+            color: #1c1c1e;
+            z-index: 10;
+        }
+
+        .status-right {
+            display: flex;
+            gap: 6px;
+            align-items: center;
+        }
+
+        .signal-bars {
+            display: flex;
+            align-items: flex-end;
+            gap: 2px;
+            height: 12px;
+        }
+
+        .signal-bar {
+            width: 3px;
+            background: #1c1c1e;
+            border-radius: 1px;
+        }
+
+        .signal-bar:nth-child(1) { height: 4px; }
+        .signal-bar:nth-child(2) { height: 6px; }
+        .signal-bar:nth-child(3) { height: 8px; }
+        .signal-bar:nth-child(4) { height: 10px; opacity: 0.3; }
+
+        .wifi-icon {
+            width: 16px;
+            height: 12px;
+            position: relative;
+        }
+
+        .wifi-icon::before {
+            content: "";
+            position: absolute;
+            width: 6px;
+            height: 6px;
+            background: #1c1c1e;
+            border-radius: 50%;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+
+        .battery {
+            width: 22px;
+            height: 11px;
+            border: 1.5px solid #1c1c1e;
+            border-radius: 3px;
+            position: relative;
+            display: flex;
+            align-items: center;
+            padding: 2px;
+        }
+
+        .battery::after {
+            content: "";
+            position: absolute;
+            right: -3px;
+            width: 2px;
+            height: 5px;
+            background: #1c1c1e;
+            border-radius: 0 1px 1px 0;
+        }
+
+        .battery-level {
+            width: 80%;
+            height: 100%;
+            background: #1c1c1e;
+            border-radius: 1px;
+        }
+
+        /* 对话内容区 */
+        .chat-container {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px 24px 30px;
+            background: #f5f7fa;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        /* 任务提示框 */
+        .task-card {
+            background: #fff;
+            border: 1px solid #e1e4e8;
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+        }
+
+        .task-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            background: #4a90e2;
+            color: #fff;
+            font-size: 12px;
+            font-weight: 600;
+            border-radius: 20px;
+            margin-bottom: 12px;
+            letter-spacing: 0.5px;
+        }
+
+        .task-title {
+            font-size: 17px;
+            font-weight: 700;
+            color: #1c1c1e;
+            margin-bottom: 16px;
+            line-height: 1.4;
+        }
+
+        .task-section {
+            margin-bottom: 14px;
+        }
+
+        .task-section:last-child {
+            margin-bottom: 0;
+        }
+
+        .task-label {
+            font-size: 13px;
+            font-weight: 600;
+            color: #5a6c7d;
+            margin-bottom: 6px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .task-label::before {
+            content: "";
+            width: 4px;
+            height: 14px;
+            background: #4a90e2;
+            border-radius: 2px;
+        }
+
+        .task-text {
+            font-size: 14px;
+            color: #3a4a5c;
+            line-height: 1.7;
+            padding-left: 10px;
+        }
+
+        .task-hint {
+            font-size: 13px;
+            color: #c75450;
+            background: #fde8e6;
+            padding: 10px 14px;
+            border-radius: 8px;
+            margin-top: 14px;
+            border-left: 3px solid #c75450;
+            line-height: 1.6;
+        }
+
+        /* 系统头部 */
+        .system-header {
+            text-align: center;
+            margin-bottom: 4px;
+        }
+
+        .system-icon-box {
+            width: 80px;
+            height: 80px;
+            background: #e8ecf1;
+            border-radius: 20px;
+            margin: 0 auto 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid #d1d8e0;
+        }
+
+        .system-icon {
+            font-size: 36px;
+            color: #5a6c7d;
+        }
+
+        .system-title {
+            font-size: 17px;
+            color: #3a4a5c;
+            font-weight: 500;
+        }
+
+        /* 参数设置区 */
+        .param-section {
+            background: #fff;
+            border: 1px solid #e1e4e8;
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 8px;
+        }
+
+        .param-select {
+            width: 100%;
+            padding: 12px 14px;
+            background: #f8f9fa;
+            border: 1px solid #e1e4e8;
+            border-radius: 8px;
+            font-size: 14px;
+            color: #3a4a5c;
+            margin-bottom: 10px;
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 12 12'%3E%3Cpath fill='%239aa0a6' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 12px center;
+            outline: none;
+        }
+
+        .param-select:last-child {
+            margin-bottom: 0;
+        }
+
+        .param-hint {
+            font-size: 12px;
+            color: #c75450;
+            margin-top: 10px;
+            padding-left: 2px;
+        }
+
+        /* 输入区域 */
+        .input-bubble {
+            background: #fff;
+            border: 1px solid #e1e4e8;
+            border-radius: 16px;
+            padding: 16px;
+            align-self: stretch;
+        }
+
+        .data-textarea {
+            width: 100%;
+            min-height: 200px;
+            border: none;
+            outline: none;
+            font-size: 15px;
+            line-height: 1.6;
+            color: #3a4a5c;
+            resize: none;
+            font-family: inherit;
+        }
+
+        .data-textarea::placeholder {
+            color: #9aa0a6;
+        }
+
+        .data-textarea:disabled {
+            background: #f8f9fa;
+            color: #7b8794;
+        }
+
+        /* 提交按钮 */
+        .submit-btn {
+            width: 100%;
+            padding: 14px;
+            background: #4a90e2;
+            color: #fff;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            opacity: 0.4;
+            transition: opacity 0.2s;
+            margin-top: 12px;
+        }
+
+        .submit-btn.active {
+            opacity: 1;
+        }
+
+        .submit-btn:active {
+            transform: scale(0.98);
+        }
+
+        /* 加载状态 */
+        .loading-bubble {
+            display: none;
+            background: #e8ecf1;
+            border-radius: 12px;
+            padding: 16px;
+            align-self: stretch;
+        }
+
+        .loading-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+
+        .loading-spinner {
+            width: 20px;
+            height: 20px;
+            border: 2px solid #d1d8e0;
+            border-top-color: #4a90e2;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .loading-text {
+            font-size: 14px;
+            color: #5a6c7d;
+            font-family: "SF Mono", "Courier New", monospace;
+        }
+
+        .progress-container {
+            width: 100%;
+            height: 4px;
+            background: #d1d8e0;
+            border-radius: 2px;
+            overflow: hidden;
+            margin-bottom: 10px;
+        }
+
+        .progress-bar {
+            height: 100%;
+            background: #4a90e2;
+            width: 0%;
+            transition: width 0.1s linear;
+        }
+
+        .system-warning {
+            font-size: 12px;
+            color: #c75450;
+            background: #fde8e6;
+            padding: 8px 12px;
+            border-radius: 6px;
+            border-left: 2px solid #c75450;
+            display: none;
+        }
+
+        /* AI回复 */
+        .ai-bubble {
+            display: none;
+            background: #fff;
+            border: 1px solid #e1e4e8;
+            border-radius: 16px;
+            padding: 16px;
+            align-self: stretch;
+        }
+
+        .ai-header {
+            font-size: 13px;
+            color: #7b8794;
+            margin-bottom: 12px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #f0f2f5;
+        }
+
+        .ai-content {
+            font-size: 14px;
+            line-height: 1.8;
+            color: #3a4a5c;
+            margin-bottom: 12px;
+        }
+
+        /* 排版工具栏 */
+        .format-toolbar {
+            display: flex;
+            gap: 8px;
+            padding: 8px;
+            background: #f8f9fa;
+            border: 1px solid #e1e4e8;
+            border-radius: 8px;
+            margin-bottom: 12px;
+        }
+
+        .format-btn {
+            width: 32px;
+            height: 32px;
+            border: 1px solid #d1d8e0;
+            background: #fff;
+            border-radius: 6px;
+            font-size: 14px;
+            color: #5a6c7d;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            font-weight: 600;
+        }
+
+        .format-btn:active {
+            background: #e8ecf1;
+            transform: scale(0.95);
+        }
+
+        .format-btn.active {
+            background: #4a90e2;
+            color: #fff;
+            border-color: #4a90e2;
+        }
+
+        .format-divider {
+            width: 1px;
+            background: #e1e4e8;
+            margin: 0 4px;
+        }
+
+        /* 富文本编辑区 */
+        .output-box {
+            background: #f8f9fa;
+            border: 1px solid #e1e4e8;
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 12px;
+            min-height: 200px;
+        }
+
+        .output-editor {
+            width: 100%;
+            min-height: 176px;
+            outline: none;
+            font-size: 14px;
+            line-height: 1.8;
+            color: #3a4a5c;
+            font-family: inherit;
+        }
+
+        .output-editor b, .output-editor strong {
+            font-weight: 700;
+        }
+
+        .output-editor i, .output-editor em {
+            font-style: italic;
+        }
+
+        .output-editor u {
+            text-decoration: underline;
+        }
+
+        .output-editor s, .output-editor strike, .output-editor del {
+            text-decoration: line-through;
+        }
+
+        .output-editor ul, .output-editor ol {
+            padding-left: 20px;
+            margin: 8px 0;
+        }
+
+        .output-editor li {
+            margin: 4px 0;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 10px;
+        }
+
+        .action-btn {
+            flex: 1;
+            padding: 12px;
+            background: #5a6c7d;
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .action-btn.secondary {
+            background: #b0b8c1;
+        }
+
+        /* 底部指示条 */
+        .home-indicator {
+            position: absolute;
+            bottom: 8px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 134px;
+            height: 5px;
+            background: #1c1c1e;
+            border-radius: 3px;
+            z-index: 100;
+        }
+    </style>
+<base target="_blank">
+</head>
+<body>
+
+    <!-- 手机界面 -->
+    <div class="device-screen">
+        
+        <!-- 状态栏 -->
+        <div class="status-bar">
+            <span id="clock">11:23</span>
+            <div class="status-right">
+                <div class="signal-bars">
+                    <div class="signal-bar"></div>
+                    <div class="signal-bar"></div>
+                    <div class="signal-bar"></div>
+                    <div class="signal-bar"></div>
+                </div>
+                <div class="wifi-icon"></div>
+                <div class="battery">
+                    <div class="battery-level"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 对话内容区 -->
+        <div class="chat-container" id="chatContainer">
+            <!-- 任务提示框 -->
+            <div class="task-card">
+                <div class="task-badge">实验任务</div>
+                <div class="task-title">校园快闪展览项目</div>
+                
+                <div class="task-section">
+                    <div class="task-label">角色</div>
+                    <div class="task-text">被试扮演设计团队的主设计师</div>
+                </div>
+                
+                <div class="task-section">
+                    <div class="task-label">任务</div>
+                    <div class="task-text">你是校园快闪展览项目的主设计师。甲方（王主任）发来一段杂乱的语音反馈，AI助手已将语音转录成文字并生成了一份60分的《展览创意设计方案》。请你将它优化成100分水平。</div>
+                </div>
+                
+                <div class="task-hint">
+                    <b>要求：</b><br>
+                    • 按创意模块（视觉概念、互动体验、材料创意）分别优化<br>
+                    • 每个模块需提炼核心创意亮点，并用设计语言清晰表达
+                </div>
+            </div>
+
+            <!-- 系统头部 -->
+            <div class="system-header">
+                <div class="system-icon-box">
+                    <span class="system-icon">⚙</span>
+                </div>
+                <div class="system-title">请输入待处理的原始文本数据。</div>
+            </div>
+
+            <!-- 参数设置 -->
+            <div class="param-section">
+                <select class="param-select" id="dataSource" onchange="checkForm()">
+                    <option value="">数据源格式：非结构化语音流</option>
+                    <option value="voice">非结构化语音流</option>
+                    <option value="text">结构化文本流</option>
+                    <option value="binary">二进制数据包</option>
+                </select>
+                <select class="param-select" id="taskTarget" onchange="checkForm()">
+                    <option value="">执行任务目标：关键特征提取</option>
+                    <option value="extract">关键特征提取</option>
+                    <option value="analyze">全文语义分析</option>
+                    <option value="mapping">实体关系映射</option>
+                </select>
+                <div class="param-hint">※ 必须完成上述参数配置方可继续操作</div>
+            </div>
+
+            <!-- 输入气泡 -->
+            <div class="input-bubble" id="inputBubble">
+                <textarea class="data-textarea" id="inputData" placeholder="请粘贴甲方或团队的杂乱会议记录，小助来帮您整理..." oninput="checkForm()">小王啊，快闪店方案我看了。主视觉那个绿色有点没活力，换更抓眼球的颜色吧，比如五彩斑斓的黑？还有线上H5，用户体验太差，步骤太多，又注册又验证码的，能不能扫码直接抽奖？线下展台那个透明亚克力太贵了，换成瓦楞纸也行，但质感绝对不能掉啊。辛苦了。</textarea>
+                <button class="submit-btn" id="submitBtn" onclick="startProcess()">提交执行任务</button>
+            </div>
+
+            <!-- 加载气泡 -->
+            <div class="loading-bubble" id="loadingBubble">
+                <div class="loading-header">
+                    <div class="loading-spinner"></div>
+                    <span class="loading-text" id="loadingText">系统处理中（预计耗时 5.0s）...</span>
+                </div>
+                <div class="progress-container">
+                    <div class="progress-bar" id="progressBar"></div>
+                </div>
+                <div class="system-warning" id="systemWarning">警告：请勿切换应用或锁屏，否则任务将中断</div>
+            </div>
+
+            <!-- AI回复气泡 -->
+            <div class="ai-bubble" id="aiBubble">
+                <div class="ai-header">系统通知</div>
+                <div class="ai-content">任务已执行结束。系统已生成初步结构化数据。请必须在下方纯文本框内复核并完成修改，随后录入系统。</div>
+                
+                <!-- 排版工具栏 -->
+                <div class="format-toolbar">
+                    <button class="format-btn" onclick="formatDoc('bold')" title="加粗"><b>B</b></button>
+                    <button class="format-btn" onclick="formatDoc('italic')" title="倾斜"><i>I</i></button>
+                    <button class="format-btn" onclick="formatDoc('underline')" title="下划线"><u>U</u></button>
+                    <div class="format-divider"></div>
+                    <button class="format-btn" onclick="formatDoc('strikeThrough')" title="删除线"><s>S</s></button>
+                    <button class="format-btn" onclick="formatDoc('insertUnorderedList')" title="无序列表">•</button>
+                    <button class="format-btn" onclick="formatDoc('insertOrderedList')" title="有序列表">1.</button>
+                </div>
+
+                <div class="output-box">
+                    <div class="output-editor" id="outputEditor" contenteditable="true">
+                        <b>《展览创意设计方案》</b><br><br>
+                        甲方说绿色不够有活力，主视觉换成"五彩斑斓的黑"，我打算用黑色背景加彩虹反光贴膜，标题做渐变色字体，应该就够抓眼球了。线上H5步骤太多，用户得注册和验证码，改成一扫二维码直接进大转盘抽奖，中奖率设高点拉人气。线下展台透明亚克力太贵了，换成瓦楞纸搭建，表面覆一层亮面膜，远看有光泽近看也不廉价，质感不会掉。
+                    </div>
+                </div>
+                <div class="action-buttons">
+                    <button class="action-btn secondary" onclick="resetForm()">返回重试</button>
+                    <button class="action-btn" onclick="confirmSubmit()">确认修改并提交</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="home-indicator"></div>
+    </div>
+
+<script>
+    function updateClock() {
+        const now = new Date();
+        const hours = String(now.getHours()).padStart(2, '0');
+        const minutes = String(now.getMinutes()).padStart(2, '0');
+        document.getElementById('clock').textContent = hours + ':' + minutes;
+    }
+    setInterval(updateClock, 1000);
+    updateClock();
+
+    function checkForm() {
+        const source = document.getElementById('dataSource').value;
+        const target = document.getElementById('taskTarget').value;
+        const data = document.getElementById('inputData').value.trim();
+        const btn = document.getElementById('submitBtn');
+        
+        if (source && target && data) {
+            btn.classList.add('active');
+        } else {
+            btn.classList.remove('active');
+        }
+    }
+
+    function startProcess() {
+        const btn = document.getElementById('submitBtn');
+        if (!btn.classList.contains('active')) return;
+
+        document.getElementById('inputData').disabled = true;
+        btn.style.display = 'none';
+
+        const loadingBubble = document.getElementById('loadingBubble');
+        loadingBubble.style.display = 'block';
+        scrollToBottom();
+
+        let progress = 0;
+        const progressBar = document.getElementById('progressBar');
+        const loadingText = document.getElementById('loadingText');
+        const warning = document.getElementById('systemWarning');
+
+        const texts = [
+            '系统处理中（预计耗时 5.0s）...',
+            '数据上传...',
+            '正在解析...',
+            '任务结束。'
+        ];
+
+        const interval = setInterval(() => {
+            progress += 2;
+            progressBar.style.width = progress + '%';
+
+            if (progress === 40) warning.style.display = 'block';
+            
+            if (progress < 30) loadingText.textContent = texts[0];
+            else if (progress < 60) loadingText.textContent = texts[1];
+            else if (progress < 90) loadingText.textContent = texts[2];
+            else loadingText.textContent = texts[3];
+
+            if (progress >= 100) {
+                clearInterval(interval);
+                setTimeout(() => {
+                    loadingBubble.style.display = 'none';
+                    document.getElementById('aiBubble').style.display = 'block';
+                    scrollToBottom();
+                }, 300);
+            }
+        }, 100);
+    }
+
+    function scrollToBottom() {
+        const container = document.getElementById('chatContainer');
+        container.scrollTop = container.scrollHeight;
+    }
+
+    // 富文本排版功能
+    function formatDoc(cmd, value = null) {
+        document.execCommand(cmd, false, value);
+        document.getElementById('outputEditor').focus();
+        updateToolbarState();
+    }
+
+    // 更新工具栏按钮状态
+    function updateToolbarState() {
+        const buttons = document.querySelectorAll('.format-btn');
+        buttons.forEach(btn => {
+            const cmd = btn.getAttribute('onclick').match(/'([^']+)'/)[1];
+            if (document.queryCommandState(cmd)) {
+                btn.classList.add('active');
+            } else {
+                btn.classList.remove('active');
+            }
+        });
+    }
+
+    // 监听选择变化更新按钮状态
+    document.addEventListener('selectionchange', updateToolbarState);
+
+    function confirmSubmit() {
+        const btn = event.target;
+        btn.style.opacity = '0.6';
+        setTimeout(() => {
+            alert('系统提示：数据已录入\n事务ID：TXN_' + Math.random().toString(36).substr(2, 9).toUpperCase());
+            btn.style.opacity = '1';
+        }, 800);
+    }
+
+    function resetForm() {
+        document.getElementById('inputData').disabled = false;
+        document.getElementById('inputData').value = '小王啊，快闪店方案我看了。主视觉那个绿色有点没活力，换更抓眼球的颜色吧，比如五彩斑斓的黑？还有线上H5，用户体验太差，步骤太多，又注册又验证码的，能不能扫码直接抽奖？线下展台那个透明亚克力太贵了，换成瓦楞纸也行，但质感绝对不能掉啊。辛苦了。';
+        document.getElementById('submitBtn').style.display = 'block';
+        document.getElementById('submitBtn').classList.remove('active');
+        document.getElementById('aiBubble').style.display = 'none';
+        document.getElementById('progressBar').style.width = '0%';
+        document.getElementById('systemWarning').style.display = 'none';
+        document.getElementById('dataSource').value = '';
+        document.getElementById('taskTarget').value = '';
+        checkForm();
+    }
+</script>
+
+</body>
+</html>
